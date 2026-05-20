@@ -1,6 +1,7 @@
 #ifndef I2C_API_H
 #define I2C_API_H
 
+#include <stdint.h>
 
 /** @brief Enumeration of supported I2C bus frequency modes. */
 typedef enum
@@ -77,7 +78,7 @@ I2C_Error_t I2C_Init(const I2C_Ch_t i2c_ch, const I2C_Freq_t i2c_freq);
  * @param direction Transfer direction (Read or Write).
  * @return I2C_Error_t Status of the operation.
  */
-I2C_Error_t I2C_Start(const I2C_Ch_t i2c_ch, const BYTE i2c_addr, const I2C_Dir_t direction);
+I2C_Error_t I2C_Start(const I2C_Ch_t i2c_ch, const uint8_t i2c_addr, const I2C_Dir_t direction);
 
 
 /**
