@@ -1,6 +1,5 @@
 #include "i2c_api.h"
 
-#include <stdio.h>
 #include <stdint.h>
 
 #define I2C_MAX_VALID_ADDR 0x7F
