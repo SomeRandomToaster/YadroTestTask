@@ -14,14 +14,15 @@
 #define HEX_BASE 16
 
 
-static uint8_t I2C_Dummy_Channel_Init_Status[I2C_CH_MAX_NUM] = {};
+/** @brief Simulated status of I2C channels */
+static uint8_t I2C_ChInitStatus[I2C_CH_MAX_NUM] = {};
 
 
 /**
  * @brief Writes a character to the QEMU-emulated USART1 interface.
  * @param c Character to be written.
  */
-static void I2C_Dummy_Write_Char(char c)
+static void I2C_WriteCharToDummy(char c)
 {
     while (!(I2C_DUMMY_USART_SR & I2C_DUMMY_TXE_FLAG));
     I2C_DUMMY_USART_DR = c;
@@ -32,11 +33,11 @@ static void I2C_Dummy_Write_Char(char c)
  * @brief Writes a string to the QEMU-emulated USART1 interface.
  * @param str String to be written.
  */
-static void I2C_Dummy_Write_Message(const char *str)
+static void I2C_WriteMsgToDummy(const char *str)
 {
     while (*str)
     {
-        I2C_Dummy_Write_Char(*str++);
+        I2C_WriteCharToDummy(*str++);
     }
 }
 
@@ -50,7 +51,7 @@ I2C_Error_t I2C_Init(const I2C_Ch_t i2c_ch, const I2C_Freq_t i2c_freq)
         return I2C_ERR_BAD_PARAMS;
     }
 
-    I2C_Dummy_Channel_Init_Status[i2c_ch] = 1;
+    I2C_ChInitStatus[i2c_ch] = 1;
     return I2C_ERR_SUCCESS;
 }
 
@@ -69,7 +70,7 @@ I2C_Error_t I2C_Start(const I2C_Ch_t i2c_ch, const uint8_t i2c_addr, const I2C_D
         return I2C_ERR_BAD_PARAMS;
     }
 
-    if (!I2C_Dummy_Channel_Init_Status[i2c_ch]) {
+    if (!I2C_ChInitStatus[i2c_ch]) {
         return I2C_ERR_BUS_ERR;
     }
 
@@ -82,7 +83,7 @@ I2C_Error_t I2C_Start(const I2C_Ch_t i2c_ch, const uint8_t i2c_addr, const I2C_D
     msg[i++] = NUM_TO_HEX_DIGIT(i2c_addr % HEX_BASE);
     msg[i++] = direction_flag;
 
-    I2C_Dummy_Write_Message(msg);
+    I2C_WriteMsgToDummy(msg);
 
     return I2C_ERR_SUCCESS;
 }
@@ -95,7 +96,7 @@ I2C_Error_t I2C_Stop(const I2C_Ch_t i2c_ch)
     if (i2c_ch >= I2C_CH_MAX_NUM) {
         return I2C_ERR_BAD_PARAMS;
     }
-    if (!I2C_Dummy_Channel_Init_Status[i2c_ch]) {
+    if (!I2C_ChInitStatus[i2c_ch]) {
         return I2C_ERR_BUS_ERR;
     }
 
@@ -103,7 +104,7 @@ I2C_Error_t I2C_Stop(const I2C_Ch_t i2c_ch)
     msg[i++] = NUM_TO_HEX_DIGIT(i2c_ch);
     msg[i++] = 'E';
 
-    I2C_Dummy_Write_Message(msg);
+    I2C_WriteMsgToDummy(msg);
 
     return I2C_ERR_SUCCESS;
 }
@@ -117,7 +118,7 @@ I2C_Error_t I2C_Read(const I2C_Ch_t i2c_ch, uint8_t* data_bytes, const uint16_t 
     if (!data_bytes || !length) {
         return I2C_ERR_BAD_PARAMS;
     }
-    if (!I2C_Dummy_Channel_Init_Status[i2c_ch]) {
+    if (!I2C_ChInitStatus[i2c_ch]) {
         return I2C_ERR_BUS_ERR;
     }
     return I2C_ERR_SUCCESS;
@@ -134,7 +135,7 @@ I2C_Error_t I2C_Write(const I2C_Ch_t i2c_ch, const uint8_t* data_bytes, const ui
     if (!data_bytes) {
         return I2C_ERR_BAD_PARAMS;
     }
-    if (!I2C_Dummy_Channel_Init_Status[i2c_ch]) {
+    if (!I2C_ChInitStatus[i2c_ch]) {
         return I2C_ERR_BUS_ERR;
     }
 
@@ -145,7 +146,7 @@ I2C_Error_t I2C_Write(const I2C_Ch_t i2c_ch, const uint8_t* data_bytes, const ui
         msg[j++] = NUM_TO_HEX_DIGIT(data_bytes[i] / HEX_BASE);
         msg[j++] = NUM_TO_HEX_DIGIT(data_bytes[i] % HEX_BASE);
 
-        I2C_Dummy_Write_Message(msg);
+        I2C_WriteMsgToDummy(msg);
     }
 
     return I2C_ERR_SUCCESS;
