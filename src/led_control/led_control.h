@@ -133,9 +133,10 @@ LED_Error_t LED_SetChannelState(uint8_t device_id, const LED_Ch_t channel, const
  *
  * @param device_id Device ID to work with.
  * @param state All channels state.
+ * @param to_each_ch If not zero, also sets each channel state.
  * @return LED_Error_t Status of the operation.
  */
-LED_Error_t LED_SetAllChannelsState(uint8_t device_id, const LED_ChState_t state);
+LED_Error_t LED_SetAllChannelsState(uint8_t device_id, const LED_ChState_t state, uint8_t to_each_ch);
 
 
 /**

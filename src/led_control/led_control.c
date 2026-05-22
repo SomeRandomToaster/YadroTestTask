@@ -11,6 +11,7 @@ typedef enum
 {
     LED_REG_SHUTDOWN = 0x00,
     LED_REG_PWM1 = 0x05,
+    LED_REG_UPDATE = 0x25,
     LED_REG_CTRL1 = 0x2A,
     LED_REG_GLOBAL_CTRL = 0x4A,
     LED_REG_CTRL_CUR_OFFSET = 1, // offset of current setting flags in LED control register
@@ -204,6 +205,11 @@ LED_Error_t LED_InitDevice(uint8_t device_id, const LED_Current_t current, const
                 return error;
             }
         }
+
+        // Load LED control register values
+        if ((error = LED_WriteReg(device_id, LED_REG_UPDATE, 0, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
+            return error;
+        }
     }
 
     return LED_ERR_SUCCESS;
@@ -225,6 +231,9 @@ LED_Error_t LED_SetChannelBrightness(uint8_t device_id, const LED_Ch_t channel, 
 
     LED_Error_t error;
     if ((error = LED_WriteReg(device_id, LED_REG_PWM1 + channel, brightness, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
+        return error;
+    }
+    if ((error = LED_WriteReg(device_id, LED_REG_UPDATE, 0, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
         return error;
     }
     return LED_ERR_SUCCESS;
@@ -252,12 +261,14 @@ LED_Error_t LED_SetChannelState(uint8_t device_id, const LED_Ch_t channel, const
     if ((error = LED_WriteReg(device_id, LED_REG_CTRL1 + channel, value, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
         return error;
     }
-
+    if ((error = LED_WriteReg(device_id, LED_REG_UPDATE, 0, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
+        return error;
+    }
     return LED_ERR_SUCCESS;
 }
 
 
-LED_Error_t LED_SetAllChannelsState(uint8_t device_id, const LED_ChState_t state)
+LED_Error_t LED_SetAllChannelsState(uint8_t device_id, const LED_ChState_t state, uint8_t to_each_ch)
 {
     if (device_id >= LED_DeviceCount) {
         return LED_ERR_BAD_PARAMS;
@@ -269,6 +280,25 @@ LED_Error_t LED_SetAllChannelsState(uint8_t device_id, const LED_ChState_t state
     LED_Error_t error;
     if ((error = LED_WriteReg(device_id, LED_REG_GLOBAL_CTRL, !state, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
         return error;
+    }
+
+    if (to_each_ch) {
+        LED_Current_t current = LED_Devices[device_id].current;
+        for (uint8_t i = 0; i < LED_CH_MAX_NUM; i++) {
+            uint8_t flags = 0;
+            if (i == 0) {
+                flags = LED_REGOP_START;
+            } else if (i == LED_CH_MAX_NUM - 1) {
+                flags = LED_REGOP_STOP;
+            }
+            if ((error = LED_WriteReg(device_id, LED_REG_CTRL1 + i, (current << LED_REG_CTRL_CUR_OFFSET) | state, flags)) != LED_ERR_SUCCESS) {
+                return error;
+            }
+        }
+
+        if ((error = LED_WriteReg(device_id, LED_REG_UPDATE, 0, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
+            return error;
+        }
     }
     return LED_ERR_SUCCESS;
 }
@@ -292,6 +322,10 @@ LED_Error_t LED_SetColor(uint8_t device_id, uint8_t red, uint8_t green, uint8_t 
         return error;
     }
     if ((error = LED_WriteReg(device_id, LED_REG_PWM1 + LED_CH_B, blue, LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
+        return error;
+    }
+
+    if ((error = LED_WriteReg(device_id, LED_REG_UPDATE, 0, LED_REGOP_START | LED_REGOP_STOP)) != LED_ERR_SUCCESS) {
         return error;
     }
     return LED_ERR_SUCCESS;
