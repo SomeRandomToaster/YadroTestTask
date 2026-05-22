@@ -3,6 +3,7 @@ CPU=cortex-m4
 SRC_DIR=src
 TESTING_SRC_DIR=$(SRC_DIR)/testing
 I2C_SRC_DIR=$(SRC_DIR)/i2c
+LED_SRC_DIR=$(SRC_DIR)/led_control
 
 BUILD_DIR=build
 OBJ_DIR=$(BUILD_DIR)/obj
@@ -31,7 +32,7 @@ qemu: $(BUILD_DIR)/firmware.elf
 qemu-gdb: $(BUILD_DIR)/firmware.elf
 	$(QEMU) $(QEMU_FLAGS) $(QEMU_GDB_FLAGS) -kernel $^
 
-$(BUILD_DIR)/firmware.elf: $(TESTING_SRC_DIR)/link.ld $(OBJ_DIR)/main.o $(OBJ_DIR)/startup.o $(OBJ_DIR)/i2c_dummy.o
+$(BUILD_DIR)/firmware.elf: $(TESTING_SRC_DIR)/link.ld $(OBJ_DIR)/main.o $(OBJ_DIR)/startup.o $(OBJ_DIR)/i2c_dummy.o $(OBJ_DIR)/led_control.o
 	$(LD) -o $@ -T $^
 
 $(OBJ_DIR)/main.o: $(TESTING_SRC_DIR)/main.c always
@@ -42,6 +43,9 @@ $(OBJ_DIR)/startup.o: $(TESTING_SRC_DIR)/startup.c always
 
 $(OBJ_DIR)/i2c_dummy.o: $(I2C_SRC_DIR)/i2c_dummy.c always
 	$(CC) $(CFLAGS) -o $@ $<
+
+$(OBJ_DIR)/led_control.o: $(LED_SRC_DIR)/led_control.c always
+	$(CC) $(CFLAGS) -o $@ -I$(SRC_DIR) $<
 
 .PHONY: always
 always:
